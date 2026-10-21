@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Maille à maille</title>
+  <meta name="description" content="Un semi-marathon, un pull. Chaque séance tricote un rang.">
+  <meta name="theme-color" content="#FFF4F7">
+  <meta name="color-scheme" content="light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Maille à maille">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <!-- Accueil -->
+    <section class="view active" id="v-home">
+      <div class="greet">
+        <div>
+          <p class="greet-hi" id="hello">Bonjour Deb</p>
+          <p class="greet-date" id="today-date"></p>
+        </div>
+        <span class="avatar" aria-hidden="true">D</span>
+      </div>
+
+      <div class="hero" id="hero">
+        <div class="hero-top">
+          <div>
+            <p class="hero-label" id="race-line">avant ton semi</p>
+            <p class="hero-count" id="countdown">J-…</p>
+            <p class="hero-phase" id="phase-line"></p>
+          </div>
+          <div class="ring-wrap" id="ring"></div>
+        </div>
+        <div class="strip" id="strip"></div>
+      </div>
+
+      <div class="card today" id="today-card"></div>
+
+      <div class="card knit-card">
+        <div class="card-head">
+          <h2>Ton tricot</h2>
+          <span class="pill" id="row-pill">Rang 0</span>
+        </div>
+        <svg id="pull" role="img" aria-label="Ton tricot en cours"></svg>
+        <p class="knit-hint" id="knit-hint"></p>
+        <div class="tiles">
+          <div class="tile"><strong id="m-sessions">0</strong><span>séances</span></div>
+          <div class="tile"><strong id="m-km">0</strong><span>km courus</span></div>
+          <div class="tile"><strong id="m-pct">0 %</strong><span>tricoté</span></div>
+        </div>
+      </div>
+
+      <div class="install" id="install-tip" hidden>
+        <b>Ajoute l'app à ton écran d'accueil</b>
+        <p>Dans Safari, touche <span class="share-ico" aria-hidden="true"></span> puis « Sur l'écran d'accueil ». Ouvre-la toujours depuis l'icône : ton tricot y est mieux gardé.</p>
+        <button class="link" id="install-close">Plus tard</button>
+      </div>
+    </section>
+
+    <!-- Plan -->
+    <section class="view" id="v-plan">
+      <header class="page-head">
+        <p class="kicker">19 semaines · 57 séances</p>
+        <h1>Le patron</h1>
+        <p class="sub">On suit le rang du jour. Une maille sautée ne se rattrape pas.</p>
+      </header>
+      <div id="weeks"></div>
+    </section>
+
+    <!-- Repères -->
+    <section class="view" id="v-guide">
+      <header class="page-head">
+        <p class="kicker" id="profile"></p>
+        <h1>Repères</h1>
+      </header>
+      <div class="card">
+        <h2>Allures</h2>
+        <div id="paces"></div>
+      </div>
+      <div class="card">
+        <h2>Semaine compliquée</h2>
+        <div id="rules"></div>
+      </div>
+      <div class="card">
+        <h2>Scénarios du jour J</h2>
+        <div id="scenarios"></div>
+        <p class="hint">L'allure se choisit fin février, après la séance 3 × 10 min.</p>
+      </div>
+      <div class="card">
+        <h2>Lexique</h2>
+        <div class="kv"><b>EF</b><small>Endurance fondamentale : tu dois pouvoir parler en courant.</small></div>
+        <div class="kv"><b>RPE</b><small>Effort ressenti, de 1 (balade) à 10 (tout donné).</small></div>
+        <div class="kv"><b>AS21</b><small>Allure semi-marathon.</small></div>
+        <div class="kv"><b>5 × 1' / 2'</b><small>5 fois 1 minute rapide, 2 minutes de récup entre chaque.</small></div>
+      </div>
+    </section>
+
+    <!-- Réglages -->
+    <section class="view" id="v-settings">
+      <header class="page-head">
+        <p class="kicker">Ta pelote</p>
+        <h1>Réglages</h1>
+      </header>
+      <div class="card">
+        <h2>Mes jours de course</h2>
+        <p class="hint top0">Choisis tes créneaux, tout le plan s'aligne dessus.</p>
+        <div class="pick" id="pick-a"></div>
+        <div class="pick" id="pick-b"></div>
+        <div class="pick" id="pick-c"></div>
+      </div>
+      <div class="card">
+        <h2>Sauvegarde</h2>
+        <p class="hint top0">Ton tricot est rangé sur ce téléphone. Garde une copie de temps en temps, dans tes Notes par exemple.</p>
+        <div class="btn-row">
+          <button class="btn soft" id="backup">Copier</button>
+          <button class="btn soft" id="restore">Restaurer</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Recommencer</h2>
+        <p class="hint top0">Efface toutes les séances. Le pull repart de zéro.</p>
+        <button class="btn danger" id="reset">Tout détricoter</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs" aria-label="Navigation">
+    <button data-view="v-home" class="on"><svg viewBox="0 0 24 24"><path d="M8 3.5 3.5 6.5l2 4 2-1V20h9V9.5l2 1 2-4L16 3.5c-.8 1.8-2.2 2.7-4 2.7S8.8 5.3 8 3.5z"/></svg><span>Tricot</span></button>
+    <button data-view="v-plan"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 9h8M8 13h8M8 17h4"/></svg><span>Patron</span></button>
+    <button data-view="v-guide"><svg viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7"/><path d="M12 13.5l3-3M10 3h4M12 3v3.5"/></svg><span>Repères</span></button>
+    <button data-view="v-settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M5.5 8.5c5 1 9 4.5 10.5 10.5M4.2 13.5c4 .2 7.5 2.3 8.8 6.3M9 4.6c3 3 5.6 7.6 5.8 14.6"/></svg><span>Pelote</span></button>
+  </nav>
+
+  <!-- Feuille de saisie -->
+  <div class="sheet-wrap" id="sheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="s-title">
+      <div class="grab"></div>
+      <div class="s-head">
+        <span class="s-ico" id="s-ico"></span>
+        <div>
+          <p class="kicker" id="s-when"></p>
+          <h2 id="s-title"></h2>
+        </div>
+      </div>
+      <p class="s-detail" id="s-detail"></p>
+      <form id="s-form">
+        <div class="row2">
+          <label class="field"><span>Distance</span><input name="km" inputmode="decimal" placeholder="7,5"><em>km</em></label>
+          <label class="field"><span>Durée</span><input name="min" inputmode="numeric" placeholder="45"><em>min</em></label>
+        </div>
+        <label class="field race-only"><span>Chrono</span><input name="time" inputmode="numeric" placeholder="2:03:00"><em>h:mm:ss</em></label>
+        <div class="row2">
+          <label class="field"><span>FC moyenne</span><input name="hr" inputmode="numeric" placeholder="150"><em>bpm</em></label>
+          <label class="field calc"><span>Allure</span><input name="pace" readonly tabindex="-1" placeholder="auto"></label>
+        </div>
+        <fieldset class="rpe">
+          <legend>Effort ressenti <b id="rpe-label"></b></legend>
+          <div class="rpe-row" id="rpe-row"></div>
+          <input type="hidden" name="rpe" value="6">
+        </fieldset>
+        <label class="field"><span>Sensations</span><textarea name="note" rows="2" placeholder="Jambes légères, vent de face…"></textarea></label>
+        <button class="btn" type="submit" id="s-submit">Tricoter ce rang</button>
+        <div class="s-actions">
+          <button class="link" type="button" id="s-skip">Séance sautée</button>
+          <button class="link" type="button" id="s-clear" hidden>Défaire ce rang</button>
+          <button class="link" type="button" id="s-cancel">Fermer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Premier lancement -->
+  <div class="onboard" id="onboard" hidden>
+    <div class="ob-inner">
+      <div class="ob-art">
+        <svg viewBox="0 0 160 120" aria-hidden="true">
+          <circle cx="58" cy="74" r="38" fill="#F7A8BE"/>
+          <path d="M23 63q35-20 70 0M21 77q37-17 74 0M29 94q29-14 58 0M43 40q22 26 6 70" stroke="#E07595" stroke-width="3" fill="none"/>
+          <path d="M94 74 Q124 92 142 52" stroke="#F7A8BE" stroke-width="2.4" fill="none"/>
+          <line x1="96" y1="12" x2="148" y2="80" stroke="#C9A27A" stroke-width="5" stroke-linecap="round"/>
+          <line x1="132" y1="10" x2="110" y2="88" stroke="#DDB98F" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="96" cy="12" r="7" fill="#E5447A"/><circle cx="132" cy="10" r="7" fill="#9CC3A6"/>
+        </svg>
+      </div>
+      <p class="kicker">Semi-marathon · 7 mars 2027</p>
+      <h1>Maille <span>à</span> maille</h1>
+      <p class="ob-text">Chaque séance de ton plan tricote un rang. 57 rangs jusqu'au 7 mars. Ce que ça devient, tu le découvriras en route.</p>
+      <div class="card">
+        <h2>Tes créneaux</h2>
+        <div class="pick" id="ob-a"></div>
+        <div class="pick" id="ob-b"></div>
+        <div class="pick" id="ob-c"></div>
+      </div>
+      <button class="btn" id="ob-go">Monter les mailles</button>
+    </div>
+  </div>
+
+  <!-- Message après une séance -->
+  <div class="toast" id="toast" hidden><span class="toast-dot"></span><p id="toast-text"></p></div>
+
+  <!-- Révélation finale -->
+  <div class="reveal" id="reveal" hidden>
+    <canvas id="confetti"></canvas>
+    <div class="reveal-inner">
+      <p class="kicker">7 mars 2027 · 21,1 km</p>
+      <h1>Ton pull est fini.</h1>
+      <div class="reveal-pull"><svg id="pull-final" role="img" aria-label="Le pull terminé"></svg></div>
+      <div class="label-tag" id="tag"></div>
+      <div class="note" id="love-note"></div>
+      <button class="btn" id="reveal-close">Le garder</button>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="plan.js"></script>
+  <script src="knit.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
