@@ -35,9 +35,9 @@
     PLAN.weeks.forEach((w, i) => {
       const monday = addDays(START, i * 7);
       const last = i === PLAN.weeks.length - 1;
-      const at = slot => addDays(monday, (state.prefs[slot] + 6) % 7);
+      const at = slot => addDays(monday, (((w.days || state.prefs)[slot]) + 6) % 7);
       out.push({ id: `w${i + 1}a`, week: i + 1, slot: 'a', kind: 'ef', date: at('a'), title: 'Footing EF', detail: w.ef });
-      out.push({ id: `w${i + 1}b`, week: i + 1, slot: 'b', kind: 'q', date: at('b'), title: 'Fractionné', detail: `${w.q}`, extra: w.wu });
+      out.push({ id: `w${i + 1}b`, week: i + 1, slot: 'b', kind: 'q', date: at('b'), title: 'Fractionné', detail: `${w.q}`, extra: w.wu || '' });
       out.push(last
         ? { id: `w${i + 1}c`, week: i + 1, slot: 'c', kind: 'race', date: RACE, title: 'Le semi', detail: '21,1 km · le grand jour' }
         : { id: `w${i + 1}c`, week: i + 1, slot: 'c', kind: 'long', date: at('c'), title: 'Sortie longue', detail: w.long });
@@ -55,6 +55,8 @@
   const stitchesFor = () => raceDone() ? Knit.total : Math.floor(Knit.total * doneList().length / TOTAL);
   const weekIndex = d => Math.min(PLAN.weeks.length, Math.max(1, Math.floor(between(START, d) / 7) + 1));
   const currentWeek = () => weekIndex(today());
+  const NW = PLAN.weeks.length;
+  const wnum = w => w - 1 + (PLAN.firstNum ?? 1); // numéro affiché
 
   // Semaines tenues d'affilée (au moins 2 séances, la règle du plan)
   function streak() {
@@ -91,11 +93,11 @@
   const MILESTONES = {
     1: 'Premier rang. Tu viens de monter tes mailles. On ne sait pas encore ce que ça deviendra.',
     10: 'Dix séances. Regarde : ça commence à ressembler à quelque chose.',
-    19: 'Un tiers du patron. Il se passe des choses sur ces aiguilles.',
-    29: 'La moitié. Le motif du milieu apparaît, regarde bien.',
-    38: 'Deux tiers. Tu as fait le plus long.',
-    50: 'Cinquante rangs. Il ne reste presque plus rien à tricoter.',
-    56: 'Dernier rang d\'entraînement. Il ne manque que la finition : elle se tricote le 7 mars.'
+    [Math.round(TOTAL / 3)]: 'Un tiers du patron. Il se passe des choses sur ces aiguilles.',
+    [Math.round(TOTAL / 2)]: 'La moitié. Le motif du milieu apparaît, regarde bien.',
+    [Math.round(TOTAL * 2 / 3)]: 'Deux tiers. Tu as fait le plus long.',
+    [TOTAL - 7]: 'Il ne reste presque plus rien à tricoter.',
+    [TOTAL - 1]: 'Dernier rang d\'entraînement. Il ne manque que la finition : elle se tricote le 7 mars.'
   };
   function cheer(s) {
     const n = doneList().length;
@@ -124,7 +126,7 @@
     $('#countdown').textContent = toRace > 0 ? `J-${toRace}` : toRace === 0 ? 'Jour J' : 'Fini';
     $('#race-line').textContent = toRace > 0 ? 'avant ton semi-marathon' : toRace === 0 ? 'c\'est aujourd\'hui' : 'semi-marathon bouclé';
     const wk = t < START ? 1 : currentWeek();
-    $('#phase-line').innerHTML = `<span>${t < START ? `Départ lundi ${START.getDate()} oct.` : `Semaine ${wk}/19 · ${PLAN.weeks[wk - 1].phase}`}</span>`;
+    $('#phase-line').innerHTML = `<span>${t < START ? `Départ lundi ${START.getDate()} oct.` : `Semaine ${wnum(wk)}/${wnum(NW)} · ${PLAN.weeks[wk - 1].phase}`}</span>`;
 
     const target = stitchesFor();
     const dur = Knit.render(pull, target, animate && target > state.shown);
@@ -218,7 +220,7 @@
       const mon = addDays(START, i * 7), sun = addDays(mon, 6);
       return `<details class="week ${n === cw ? 'current' : n < cw ? 'past' : ''}" ${n === cw ? 'open' : ''} id="wk${n}">
         <summary>
-          <span class="num">${n}</span>
+          <span class="num">${wnum(n)}</span>
           <span class="wt"><b>${w.phase}</b><small>${mon.getDate()} ${MONTHS[mon.getMonth()]} → ${sun.getDate()} ${MONTHS[sun.getMonth()]}</small></span>
           <span class="dots">${list.map(s => `<i class="${status(s) || ''}"></i>`).join('')}</span>
         </summary>
@@ -274,7 +276,7 @@
     editing = s;
     const l = state.log[id] || {};
     $('.sheet').classList.toggle('is-race', s.kind === 'race');
-    $('#s-when').textContent = `Semaine ${s.week} · ${fmt(s.date)}`;
+    $('#s-when').textContent = `Semaine ${wnum(s.week)} · ${fmt(s.date)}`;
     $('#s-title').textContent = s.title;
     $('#s-ico').className = `s-ico k-${s.kind}`;
     $('#s-ico').innerHTML = ico(s.kind);
