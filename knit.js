@@ -2,8 +2,8 @@
 const Knit = (() => {
   const W = 48, H = 54, S = 10; // colonnes, rangs, taille d'une maille (unités SVG)
   const C = {
-    base: '#E4A39B', rib: '#C97F78', ribDark: '#B86F69',
-    cream: '#FBF3E6', terra: '#B5523B', sage: '#8FA68A', mustard: '#D9A441'
+    base: '#F7A8BE', rib: '#EC8AA8', ribDark: '#DE7396',
+    cream: '#FFF6F0', terra: '#E0386F', sage: '#8FC4A0', mustard: '#FFC15E'
   };
 
   // Police 3×5 pour le motif jacquard
@@ -101,7 +101,7 @@ const Knit = (() => {
 
   function mount(svg) {
     svg.innerHTML = `<defs>${stitchDef}
-      <filter id="soft" x="-5%" y="-5%" width="110%" height="110%"><feDropShadow dx="0" dy="1.2" stdDeviation="1" flood-color="#5a3a30" flood-opacity=".18"/></filter></defs>
+      <filter id="soft" x="-5%" y="-5%" width="110%" height="110%"><feDropShadow dx="0" dy="1.2" stdDeviation="1" flood-color="#8a2d55" flood-opacity=".18"/></filter></defs>
       <g class="stitches" filter="url(#soft)"></g>
       <g class="needles"></g>`;
     svg._g = svg.querySelector('.stitches');
@@ -155,14 +155,14 @@ const Knit = (() => {
     const x = count ? last.x * S + 5 : BODY_L * S;
     const w = W * S;
     n.innerHTML = `
-      <line x1="-2" y1="${y - 3}" x2="${w + 2}" y2="${y - 9}" stroke="#A9825B" stroke-width="3.2" stroke-linecap="round"/>
-      <circle cx="-2" cy="${y - 3}" r="4.5" fill="#B5523B"/>
-      <line x1="-2" y1="${y + 5}" x2="${w + 2}" y2="${y - 1}" stroke="#C49A6C" stroke-width="3.2" stroke-linecap="round"/>
-      <circle cx="${w + 2}" cy="${y - 1}" r="4.5" fill="#8FA68A"/>
-      <path d="M${x} ${y} C ${x + 40} ${y + 60}, ${w - 30} ${H * S - 10}, ${w - 22} ${H * S + 2}" stroke="#E4A39B" stroke-width="1.6" fill="none"/>
+      <line x1="-2" y1="${y - 3}" x2="${w + 2}" y2="${y - 9}" stroke="#C9A27A" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="-2" cy="${y - 3}" r="4.5" fill="#E5447A"/>
+      <line x1="-2" y1="${y + 5}" x2="${w + 2}" y2="${y - 1}" stroke="#DDB98F" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="${w + 2}" cy="${y - 1}" r="4.5" fill="#8FC4A0"/>
+      <path d="M${x} ${y} C ${x + 40} ${y + 60}, ${w - 30} ${H * S - 10}, ${w - 22} ${H * S + 2}" stroke="#F7A8BE" stroke-width="1.6" fill="none"/>
       <g transform="translate(${w - 22} ${H * S + 4})">
-        <circle r="13" fill="#E4A39B"/>
-        <path d="M-11 -5 Q0 -12 11 -5 M-12 1 Q0 -6 12 1 M-10 7 Q0 0 10 7 M-6 -11 Q4 -2 -2 12" stroke="#C97F78" stroke-width="1.3" fill="none"/>
+        <circle r="13" fill="#F7A8BE"/>
+        <path d="M-11 -5 Q0 -12 11 -5 M-12 1 Q0 -6 12 1 M-10 7 Q0 0 10 7 M-6 -11 Q4 -2 -2 12" stroke="#E07595" stroke-width="1.3" fill="none"/>
       </g>`;
   }
 

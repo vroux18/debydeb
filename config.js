@@ -11,10 +11,5 @@ Ce pull, c'est toi qui l'as tricoté, kilomètre après kilomètre.
 
 Je suis fier de toi.
 
-Victor`,
-
-  // Rappels push : URL du Worker Cloudflare et clé publique VAPID (voir README).
-  // Vide = rappels désactivés, le reste de l'app fonctionne.
-  pushApi: '',
-  vapidPublicKey: ''
+Victor`
 };

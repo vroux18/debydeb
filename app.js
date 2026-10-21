@@ -14,7 +14,7 @@
   };
 
   // ---------- État ----------
-  const fresh = () => ({ log: {}, prefs: { a: 2, b: 4, c: 0, tWeek: '18:30', tWeekend: '09:30' }, onboarded: false, revealed: false, shown: 0, tipHidden: false, pushId: null });
+  const fresh = () => ({ log: {}, prefs: { a: 2, b: 4, c: 0 }, onboarded: false, revealed: false, shown: 0, tipHidden: false });
   let state;
   try { state = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { state = fresh(); }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
@@ -48,7 +48,6 @@
   const TOTAL = sessions.length;
   const byId = id => sessions.find(s => s.id === id);
   const status = s => (state.log[s.id] || {}).s;
-  const timeFor = s => (s.date.getDay() === 0 || s.date.getDay() === 6) ? state.prefs.tWeekend : state.prefs.tWeek;
 
   const doneList = () => sessions.filter(s => status(s) === 'done');
   const raceDone = () => status(sessions[TOTAL - 1]) === 'done';
@@ -109,28 +108,37 @@
   const pull = $('#pull');
   Knit.mount(pull);
 
+  const ICONS = {
+    ef: '<path d="M2.5 17.5 4.5 10l4 1 2.2-3.2 5.8 4.2 5 1.2V16a2 2 0 0 1-2 2H4a1.5 1.5 0 0 1-1.5-.5z"/><path d="M8.5 11.5l1 2M11.5 10.5l1 2"/>',
+    q: '<path d="M13 2.5 4.5 13.5h6.5l-1 8 8.5-11h-6.5z"/>',
+    long: '<path d="M3 19.5 9 9l4 6.5 3-4.5 5 8.5z"/><circle cx="17" cy="5.5" r="2"/>',
+    race: '<circle cx="12" cy="15" r="5.5"/><path d="M8.5 3l3.5 6.5L15.5 3M12 12.5v5"/>'
+  };
+  const ico = k => `<svg viewBox="0 0 24 24">${ICONS[k]}</svg>`;
+
   function renderHome(animate) {
     const t = today();
     const toRace = between(t, RACE);
     $('#hello').textContent = greeting();
-    $('#countdown').innerHTML = toRace > 0 ? `J-${toRace}` : toRace === 0 ? 'C\'est <em>aujourd\'hui</em>' : 'Semi <em>bouclé</em>';
-    $('#race-line').textContent = toRace > 0 ? `avant ton semi, ${fmt(RACE)} 2027` : PLAN.race.label;
+    $('#today-date').textContent = `${DAYS_LONG[t.getDay()]} ${t.getDate()} ${MONTHS[t.getMonth()].replace('.', '')}`;
+    $('#countdown').textContent = toRace > 0 ? `J-${toRace}` : toRace === 0 ? 'Jour J' : 'Fini';
+    $('#race-line').textContent = toRace > 0 ? 'avant ton semi-marathon' : toRace === 0 ? 'c\'est aujourd\'hui' : 'semi-marathon bouclé';
+    const wk = t < START ? 1 : currentWeek();
+    $('#phase-line').innerHTML = `<span>${t < START ? `Départ lundi ${START.getDate()} oct.` : `Semaine ${wk}/19 · ${PLAN.weeks[wk - 1].phase}`}</span>`;
 
     const target = stitchesFor();
     const dur = Knit.render(pull, target, animate && target > state.shown);
     state.shown = target; save();
     const done = doneList().length;
-    $('#m-sessions').textContent = `${done}/${TOTAL}`;
-    $('#m-km').textContent = Math.round(totalKm() * 10) / 10 || 0;
-    const pct = Math.round(target / Knit.total * 100);
-    $('#m-pct').textContent = `${pct} %`;
-    setTimeout(() => { $('#bar').style.width = `${pct}%`; }, animate ? 200 : 0);
+    $('#row-pill').textContent = `Rang ${done}/${TOTAL}`;
+    $('#m-sessions').textContent = done;
+    $('#m-km').textContent = String(Math.round(totalKm() * 10) / 10).replace('.', ',');
+    $('#m-pct').textContent = `${Math.round(target / Knit.total * 100)} %`;
     $('#knit-hint').textContent = done === 0
-      ? 'Rien sur les aiguilles pour l\'instant. Chaque séance tricote un rang.'
-      : raceDone() ? 'Terminé. Touche pour le revoir.' : 'Ce que ça devient, tu le découvriras en route.';
+      ? 'Rien sur les aiguilles. Ta première séance monte les mailles.'
+      : raceDone() ? 'Terminé. Touche-le pour le revoir.' : 'Ce que ça devient, tu le découvriras en route.';
     renderToday();
-    renderWeek();
-    updateBadge();
+    renderWeek(wk);
     return dur;
   }
 
@@ -150,50 +158,55 @@
     const nx = nextSession();
     if (raceDone()) {
       const r = state.log[sessions[TOTAL - 1].id];
-      el.innerHTML = `<span class="tag">Fini</span><h2>${r.time ? `21,1 km en ${esc(r.time)}` : '21,1 km'}</h2>
-        <p class="detail">Le patron est terminé. Le pull aussi.</p><button class="btn" id="see">Revoir mon pull</button>`;
-      $('#see').onclick = openReveal;
+      el.className = 'card today k-race';
+      el.innerHTML = `<span class="t-ico">${ico('race')}</span><p class="when">Terminé</p>
+        <h2>${r.time ? `21,1 km en ${esc(r.time)}` : '21,1 km'}</h2><p class="detail">Le patron est fini. Le pull aussi.</p>
+        <button class="btn" id="see">Revoir mon pull</button>`;
+      $('#see').onclick = () => openReveal();
       return;
     }
     const missed = sessions.filter(s => !status(s) && s.date < t && s.week === currentWeek());
-    const missedNote = missed.length ? `<p class="also">${missed.map(s => s.title).join(', ')} passé${missed.length > 1 ? 's' : ''} sans être noté${missed.length > 1 ? 's' : ''}. Fait ? <button class="link inline" data-open="${missed[0].id}">Le noter</button>. Sinon, on ne rattrape pas : on reprend le plan.</p>` : '';
-    if (!nx) { el.innerHTML = missedNote; return; }
+    const missedNote = missed.length ? `<p class="also">${missed.map(s => s.title).join(', ')} pas noté${missed.length > 1 ? 's' : ''}. Fait ? <button class="link inline" data-open="${missed[0].id}">Le noter</button>. Sinon, on ne rattrape pas.</p>` : '';
+    if (!nx) { el.className = 'card today'; el.innerHTML = missedNote; return; }
     const isToday = +nx.date === +t;
     const beforeStart = t < START;
-    const when = isToday ? `Aujourd'hui · ${timeFor(nx)}` : beforeStart ? `Départ ${fmt(nx.date)}` : between(t, nx.date) === 1 ? `Demain · ${timeFor(nx)}` : `${DAYS_LONG[nx.date.getDay()]} · ${timeFor(nx)}`;
+    const gap = between(t, nx.date);
+    const when = isToday ? 'Aujourd\'hui' : gap === 1 ? 'Demain' : beforeStart ? `Premier rang · ${fmt(nx.date)}` : `${DAYS_LONG[nx.date.getDay()]} ${nx.date.getDate()}`;
     const doneToday = sessions.some(s => +s.date === +t && status(s) === 'done');
-    const rest = doneToday ? '<p class="rest">Rang du jour tricoté. Le reste de la journée, c\'est récup.</p>'
-      : !isToday && !beforeStart ? '<p class="rest">Aujourd\'hui : repos. Le repos fait aussi partie du patron.</p>' : '';
-    el.className = `card today ${isToday ? 'is-today' : ''} k-${nx.kind}`;
-    el.innerHTML = `${rest}<span class="tag">${when}</span>
+    const rest = doneToday ? '<p class="rest">Rang du jour tricoté. Place à la récup.</p>'
+      : !isToday && !beforeStart ? '<p class="rest">Aujourd\'hui, repos. Il fait aussi partie du patron.</p>' : '';
+    el.className = `card today k-${nx.kind}`;
+    el.innerHTML = `${rest}<span class="t-ico">${ico(nx.kind)}</span>
+      <p class="when">${when}</p>
       <h2>${nx.title}</h2>
-      <p class="detail">${esc(nx.detail)}${nx.extra ? `<br><small>${esc(nx.extra)}</small>` : ''}</p>
-      <button class="btn" data-open="${nx.id}">${nx.kind === 'race' ? 'J\'ai passé la ligne' : isToday ? 'Séance faite, je tricote' : 'Je l\'ai déjà faite'}</button>
+      <p class="detail">${esc(nx.detail)}${nx.extra ? `<small>${esc(nx.extra)}</small>` : ''}</p>
+      <button class="btn" data-open="${nx.id}">${nx.kind === 'race' ? 'J\'ai passé la ligne' : isToday ? 'Séance faite, je tricote' : 'Déjà faite ? La noter'}</button>
       ${missedNote}`;
   }
 
-  function renderWeek() {
-    const el = $('#week-card');
+  // Bandeau de la semaine + anneau
+  function renderWeek(wk) {
     const t = today();
-    const wk = t < START ? 1 : currentWeek();
-    const w = PLAN.weeks[wk - 1];
     const list = sessions.filter(s => s.week === wk);
     const done = list.filter(s => status(s) === 'done').length;
-    const C = 2 * Math.PI * 26;
+    const C = 2 * Math.PI * 30;
+    $('#ring').innerHTML = `<svg viewBox="0 0 76 76" aria-hidden="true">
+        <circle cx="38" cy="38" r="30" stroke="rgba(255,255,255,.25)" stroke-width="8" fill="none"/>
+        <circle cx="38" cy="38" r="30" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round"
+          stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - done / 3)}" transform="rotate(-90 38 38)" style="transition:stroke-dashoffset 1s ease"/>
+        <text x="38" y="44" text-anchor="middle">${done}/3</text></svg>cette semaine`;
+    const monday = addDays(START, (wk - 1) * 7);
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(monday, i);
+      const s = list.find(x => +x.date === +d);
+      const cls = [s ? 'has' : '', s && status(s) || '', +d === +t ? 'now' : ''].join(' ');
+      html += `<button class="${cls}" ${s ? `data-open="${s.id}"` : 'disabled'} aria-label="${DAYS_LONG[d.getDay()]} ${d.getDate()}${s ? ` : ${s.title}` : ''}">
+        <span class="d">${'DLMMJVS'[d.getDay()]}</span><span class="n">${d.getDate()}</span><span class="dot"></span></button>`;
+    }
+    $('#strip').innerHTML = html;
     const st = streak();
-    el.innerHTML = `
-      <svg class="ring" viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r="26" stroke="#F1E6DA" stroke-width="7" fill="none"/>
-        <circle cx="32" cy="32" r="26" stroke="var(--terra)" stroke-width="7" fill="none" stroke-linecap="round"
-          stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - done / 3)}" transform="rotate(-90 32 32)"/>
-        <text x="32" y="38" text-anchor="middle">${done}/3</text>
-      </svg>
-      <div class="wk">
-        <p class="eyebrow">Semaine ${wk} · ${w.phase}</p>
-        <b>${esc(w.goal)}</b>
-        <div class="wk-days">${list.map(s => `<button data-open="${s.id}" class="${status(s) || ''} ${+s.date === +t ? 'now' : ''}"><span>${DAYS[s.date.getDay()].slice(0, 3)}</span>${s.kind === 'race' ? '21' : s.date.getDate()}</button>`).join('')}</div>
-        ${st > 1 ? `<small class="streak">${st} semaines tenues d'affilée</small>` : ''}
-      </div>`;
+    if (st > 1) $('#phase-line').innerHTML += `<span>${st} semaines tenues</span>`;
   }
 
   function renderPlan() {
@@ -203,7 +216,7 @@
       const n = i + 1;
       const list = sessions.filter(s => s.week === n);
       const mon = addDays(START, i * 7), sun = addDays(mon, 6);
-      return `<details class="week ${n === cw ? 'current' : ''}" ${n === cw ? 'open' : ''} id="wk${n}">
+      return `<details class="week ${n === cw ? 'current' : n < cw ? 'past' : ''}" ${n === cw ? 'open' : ''} id="wk${n}">
         <summary>
           <span class="num">${n}</span>
           <span class="wt"><b>${w.phase}</b><small>${mon.getDate()} ${MONTHS[mon.getMonth()]} → ${sun.getDate()} ${MONTHS[sun.getMonth()]}</small></span>
@@ -212,7 +225,7 @@
         <div class="body">
           <p class="goal">${esc(w.goal)} · ${esc(w.intensity)}</p>
           ${list.map(s => `<button class="sess ${status(s) || ''} ${s.kind === 'race' ? 'race' : ''}" data-open="${s.id}">
-            <span class="day">${DAYS[s.date.getDay()]}<br>${s.date.getDate()} ${MONTHS[s.date.getMonth()]}</span>
+            <span class="day"><small>${DAYS[s.date.getDay()]}</small><b>${s.date.getDate()}</b><small>${MONTHS[s.date.getMonth()]}</small></span>
             <span class="what"><b>${s.title}</b><small>${esc(s.detail)}</small>${logLine(s)}</span>
             <span class="st"></span></button>`).join('')}
           <p class="two">Seulement 2 séances cette semaine : ${esc(w.two || 'fractionné + sortie longue')}.</p>
@@ -250,7 +263,6 @@
     sessions = buildSessions();
     renderPicks('pick'); renderPicks('ob');
     renderAll();
-    syncPush();
   });
 
   // ---------- Feuille de saisie ----------
@@ -264,14 +276,15 @@
     $('.sheet').classList.toggle('is-race', s.kind === 'race');
     $('#s-when').textContent = `Semaine ${s.week} · ${fmt(s.date)}`;
     $('#s-title').textContent = s.title;
+    $('#s-ico').className = `s-ico k-${s.kind}`;
+    $('#s-ico').innerHTML = ico(s.kind);
     $('#s-detail').innerHTML = esc(s.detail) + (s.extra ? `<br><small>${esc(s.extra)}</small>` : '');
     form.km.value = l.km || (s.kind === 'race' ? '21,1' : '');
     form.min.value = l.min || '';
     form.hr.value = l.hr || '';
     form.time.value = l.time || '';
-    form.rpe.value = l.rpe || 6;
+    setRpe(l.rpe || 6);
     form.note.value = l.note || '';
-    $('#rpe-out').textContent = form.rpe.value;
     updatePace();
     $('#s-submit').textContent = s.kind === 'race' ? 'Tricoter la finition' : l.s === 'done' ? 'Enregistrer' : 'Tricoter ce rang';
     $('#s-clear').hidden = !l.s;
@@ -292,10 +305,22 @@
     form.pace.value = pace(form.km.value, min);
   }
   const hmsToMin = t => { const p = t.split(/[:h'\s]+/).map(Number).filter(n => !isNaN(n)); return p.length === 3 ? p[0] * 60 + p[1] + p[2] / 60 : p.length === 2 ? p[0] * 60 + p[1] : NaN; };
-  form.addEventListener('input', e => {
-    if (e.target.name === 'rpe') $('#rpe-out').textContent = e.target.value;
-    updatePace();
-  });
+  form.addEventListener('input', updatePace);
+
+  // Effort ressenti : 10 pastilles, du rose pâle au framboise
+  const RPE_TXT = ['', 'balade', 'très facile', 'facile', 'confortable', 'modéré', 'soutenu', 'difficile', 'très dur', 'à fond', 'maximal'];
+  const rpeColor = n => `hsl(${345 - n * 1.5} ${60 + n * 3}% ${78 - n * 3.6}%)`;
+  $('#rpe-row').innerHTML = Array.from({ length: 10 }, (_, i) => `<button type="button" data-rpe="${i + 1}">${i + 1}</button>`).join('');
+  function setRpe(n) {
+    form.rpe.value = n;
+    $$('#rpe-row button').forEach(b => {
+      const on = +b.dataset.rpe === +n;
+      b.classList.toggle('on', on);
+      b.style.background = on ? rpeColor(n) : '';
+    });
+    $('#rpe-label').textContent = `${n}/10 · ${RPE_TXT[n]}`;
+  }
+  $('#rpe-row').addEventListener('click', e => { const b = e.target.closest('[data-rpe]'); if (b) setRpe(+b.dataset.rpe); });
   form.addEventListener('submit', e => {
     e.preventDefault();
     const s = editing;
@@ -304,7 +329,7 @@
       s: 'done', km: form.km.value.trim(), min: form.min.value.trim(), hr: form.hr.value.trim(),
       rpe: +form.rpe.value, note: form.note.value.trim(), time: form.time.value.trim(), at: Date.now()
     };
-    save(); closeSheet(); syncPush();
+    save(); closeSheet();
     if (s.kind === 'race') { renderAll(); openReveal(true); return; }
     showView('v-home');
     const dur = renderHome(true);
@@ -313,12 +338,12 @@
   });
   $('#s-skip').onclick = () => {
     state.log[editing.id] = { s: 'skip', at: Date.now() };
-    save(); closeSheet(); renderAll(); syncPush();
+    save(); closeSheet(); renderAll();
     toast('Noté. On ne rattrape pas : prochaine séance comme prévu.');
   };
   $('#s-clear').onclick = () => {
     delete state.log[editing.id];
-    save(); closeSheet(); renderAll(); syncPush();
+    save(); closeSheet(); renderAll();
   };
   $('#s-cancel').onclick = closeSheet;
   sheet.addEventListener('click', e => { if (e.target === sheet) closeSheet(); });
@@ -388,10 +413,6 @@
   $$('.tabs button').forEach(b => b.onclick = () => showView(b.dataset.view));
 
   // ---------- Réglages ----------
-  for (const [id, k] of [['#t-week', 'tWeek'], ['#t-weekend', 'tWeekend']]) {
-    $(id).value = state.prefs[k];
-    $(id).onchange = e => { state.prefs[k] = e.target.value || state.prefs[k]; save(); renderAll(); syncPush(); };
-  }
   $('#backup').onclick = async () => {
     const data = JSON.stringify(state);
     try { await navigator.clipboard.writeText(data); toast('Sauvegarde copiée. Colle-la dans tes notes.'); }
@@ -414,91 +435,9 @@
     save(); Knit.render(pull, 0); renderAll();
   };
 
-  // ---------- Rappels push ----------
-  const standalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  const pushReady = () => CONFIG.pushApi && CONFIG.vapidPublicKey && 'serviceWorker' in navigator && 'PushManager' in window;
-
-  function renderPush() {
-    const box = $('#push-box');
-    const perm = 'Notification' in window ? Notification.permission : 'unsupported';
-    if (!CONFIG.pushApi) {
-      box.innerHTML = '<p class="hint" style="margin-top:0">Les rappels ne sont pas encore branchés.</p>';
-    } else if (isIOS && !standalone()) {
-      box.innerHTML = `<p>Pour recevoir tes rappels, installe d'abord l'app : touche <span class="share-ico"></span> Partager, puis « Sur l'écran d'accueil ». Ouvre-la ensuite depuis l'icône.</p>`;
-    } else if (!pushReady() || perm === 'unsupported') {
-      box.innerHTML = '<p class="hint" style="margin-top:0">Ce navigateur ne gère pas les notifications.</p>';
-    } else if (perm === 'denied') {
-      box.innerHTML = '<p>Notifications refusées. Pour les réactiver : Réglages iPhone › Notifications › Maille à maille.</p>';
-    } else if (state.pushId && perm === 'granted') {
-      box.innerHTML = `<ul class="rem">
-          <li><b>À l'heure de ta séance</b> ce qu'il y a au programme</li>
-          <li><b>21h30</b> si la séance du jour n'est pas notée</li>
-          <li><b>Dimanche soir</b> le bilan de ta semaine</li>
-          <li><b>La veille du semi</b> un dernier mot</li></ul>
-        <button class="btn ghost" id="push-test">M'envoyer un rappel test</button>
-        <button class="link small" id="push-off">Couper les rappels</button>`;
-      $('#push-test').onclick = () => api('/test', { id: state.pushId }).then(() => toast('Envoyé. Il arrive dans quelques secondes.')).catch(() => toast('Le serveur de rappels ne répond pas.'));
-      $('#push-off').onclick = async () => {
-        await api('/unsubscribe', { id: state.pushId }).catch(() => {});
-        const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe();
-        state.pushId = null; save(); renderPush();
-      };
-    } else {
-      box.innerHTML = `<p>Un rappel à l'heure de ta séance, une relance si elle n'est pas notée, et le bilan du dimanche.</p>
-        <button class="btn" id="push-on">Activer les rappels</button>`;
-      $('#push-on').onclick = enablePush;
-    }
-  }
-
-  async function enablePush() {
-    try {
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') { renderPush(); return; }
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(CONFIG.vapidPublicKey) });
-      state.pushId = state.pushId || (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
-      save();
-      await api('/subscribe', { id: state.pushId, sub: sub.toJSON(), ...schedulePayload() });
-      renderPush();
-      toast('Rappels activés.');
-    } catch (err) {
-      toast('Impossible d\'activer les rappels pour l\'instant.');
-      console.error(err);
-    }
-  }
-
-  function schedulePayload() {
-    return {
-      name: CONFIG.name,
-      sessions: sessions.map(s => ({ id: s.id, week: s.week, kind: s.kind, date: iso(s.date), time: timeFor(s), title: s.title, detail: s.detail, s: status(s) || null }))
-    };
-  }
-  let syncTimer;
-  function syncPush() {
-    if (!state.pushId || !CONFIG.pushApi) return;
-    clearTimeout(syncTimer);
-    syncTimer = setTimeout(() => api('/sync', { id: state.pushId, ...schedulePayload() }).catch(() => {}), 600);
-  }
-  function api(path, body) {
-    return fetch(CONFIG.pushApi.replace(/\/$/, '') + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
-      .then(r => { if (!r.ok) throw new Error(r.status); return r; });
-  }
-  function b64u(s) {
-    const b = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4));
-    return Uint8Array.from(b, c => c.charCodeAt(0));
-  }
-
-  // Badge sur l'icône : séances restantes cette semaine
-  function updateBadge() {
-    if (!('setAppBadge' in navigator) || !('Notification' in window) || Notification.permission !== 'granted') return;
-    const left = sessions.filter(s => s.week === currentWeek() && !status(s)).length;
-    (left ? navigator.setAppBadge(left) : navigator.clearAppBadge()).catch(() => {});
-  }
-
   // ---------- Démarrage ----------
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  function renderAll(animate) { renderHome(!!animate); renderPlan(); renderPush(); }
+  function renderAll(animate) { renderHome(!!animate); renderPlan(); }
 
   renderGuide();
   renderPicks('pick');
@@ -508,8 +447,10 @@
   renderAll(true);
 
   if (!state.onboarded) $('#onboard').hidden = false;
-  $('#ob-go').onclick = () => { state.onboarded = true; save(); $('#onboard').hidden = true; syncPush(); };
+  $('#ob-go').onclick = () => { state.onboarded = true; save(); $('#onboard').hidden = true; };
 
+  const standalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
   if (isIOS && !standalone() && !state.tipHidden) $('#install-tip').hidden = false;
   $('#install-close').onclick = () => { state.tipHidden = true; save(); $('#install-tip').hidden = true; };
 
