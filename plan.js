@@ -1,9 +1,12 @@
 // Plan semi-marathon du 7 mars 2027 (source : Plan_semi_marathon_7_mars_2027_detaille.xlsx)
 const PLAN = {
-  start: '2026-10-26', // lundi semaine 1
+  start: '2026-10-19', // lundi de la semaine 0
+  firstNum: 0, // la semaine test porte le numéro 0, les suivantes gardent la numérotation de l'Excel
   race: { date: '2027-03-07', label: 'Semi-marathon · 21,1 km' },
   profile: '28 ans · 10 km en 55 min (5:30/km) · FC max ≈ 202 bpm',
   weeks: [
+    // Semaine test ajoutée par Deb, à dates fixes (mer., ven., dim.)
+    { phase: 'Test', days: { a: 3, b: 5, c: 0 }, ef: '35 min EF', q: "5 × 1' soutenue / 2'", wu: '', long: '60 min EF', intensity: 'Prise en main', goal: 'Tester le plan et l\'app', two: 'Fractionné + sortie longue' },
     { phase: 'Reprise', ef: '40 min EF', q: "5 × 1' soutenue / 2' récup", wu: '10–15 min EF avant + 10 min EF après', long: '1h00 EF', intensity: 'EF conversation facile ; fractions RPE 7–8/10', goal: 'Repartir sans pression' },
     { phase: 'Reprise', ef: '40 min EF', q: "5 × 1' / 2'", wu: '10–15 min EF + 10 min EF', long: '1h05 EF', intensity: 'Idem', goal: 'Retrouver la régularité' },
     { phase: 'Reprise', ef: '45 min EF', q: "6 × 1' / 1'30", wu: '10–15 min EF + 10 min EF', long: '1h10 EF', intensity: 'Idem', goal: 'Progression douce' },

@@ -1,5 +1,5 @@
 // Fonctionnement hors ligne
-const CACHE = 'maille-v2';
+const CACHE = 'maille-v3';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'knit.js', 'plan.js', 'config.js', 'manifest.webmanifest', 'icons/apple-touch-icon.png', 'icons/icon-192.png'];
 
 self.addEventListener('install', e => {
