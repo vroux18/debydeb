@@ -1,0 +1,16 @@
+name = "maille-a-maille-rappels"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# Vérifie toutes les 15 minutes s'il y a un rappel à envoyer
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[kv_namespaces]]
+binding = "SUBS"
+id = "REMPLACER_PAR_ID_KV"
+
+[vars]
+VAPID_SUBJECT = "mailto:victor@example.com"
+ALLOWED_ORIGIN = "*"
+# Secrets à poser avec `npx wrangler secret put` : VAPID_PUBLIC_KEY, VAPID_PRIVATE_JWK
