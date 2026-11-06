@@ -14,7 +14,7 @@
   };
 
   // ---------- État ----------
-  const fresh = () => ({ log: {}, prefs: { a: 2, b: 4, c: 0 }, onboarded: false, revealed: false, shown: 0, tipHidden: false });
+  const fresh = () => ({ log: {}, prefs: { a: 2, b: 4, c: 0 }, prefsFrom: {}, onboarded: false, revealed: false, shown: 0, tipHidden: false });
   let state;
   try { state = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { state = fresh(); }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
@@ -30,12 +30,18 @@
   const START = parse(PLAN.start), RACE = parse(PLAN.race.date);
 
   // ---------- Séances ----------
+  // Jours en vigueur pour une semaine : le dernier choix fait à partir de cette semaine ou avant.
+  // state.prefsFrom = { numéroSemaine: prefs } ; sans entrée applicable, state.prefs.
+  function prefsFor(week) {
+    const keys = Object.keys(state.prefsFrom || {}).map(Number).filter(k => k <= week);
+    return keys.length ? state.prefsFrom[Math.max(...keys)] : state.prefs;
+  }
   function buildSessions() {
     const out = [];
     PLAN.weeks.forEach((w, i) => {
       const monday = addDays(START, i * 7);
       const last = i === PLAN.weeks.length - 1;
-      const at = slot => addDays(monday, (((w.days || state.prefs)[slot]) + 6) % 7);
+      const at = slot => addDays(monday, (((w.days || prefsFor(i + 1))[slot]) + 6) % 7);
       out.push({ id: `w${i + 1}a`, week: i + 1, slot: 'a', kind: 'ef', date: at('a'), title: 'Footing EF', detail: w.ef });
       out.push({ id: `w${i + 1}b`, week: i + 1, slot: 'b', kind: 'q', date: at('b'), title: 'Fractionné', detail: `${w.q}`, extra: w.wu || '' });
       out.push(last
@@ -260,7 +266,13 @@
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-slot]');
     if (!b) return;
-    state.prefs[b.dataset.slot] = +b.dataset.day;
+    // Le changement vaut pour la semaine en cours et les suivantes ; les semaines passées gardent leurs jours.
+    const from = today() < START ? 1 : currentWeek();
+    state.prefsFrom = state.prefsFrom || {};
+    if (from > 1 && !Object.keys(state.prefsFrom).some(k => +k < from)) state.prefsFrom[1] = { ...state.prefs };
+    for (const k of Object.keys(state.prefsFrom)) if (+k >= from) delete state.prefsFrom[k];
+    state.prefs = { ...state.prefs, [b.dataset.slot]: +b.dataset.day };
+    state.prefsFrom[from] = { ...state.prefs };
     save();
     sessions = buildSessions();
     renderPicks('pick'); renderPicks('ob');
@@ -434,7 +446,7 @@
     if (!confirm('Tout détricoter ? Toutes tes séances seront effacées.')) return;
     const prefs = state.prefs;
     state = Object.assign(fresh(), { prefs, onboarded: true });
-    save(); Knit.render(pull, 0); renderAll();
+    save(); sessions = buildSessions(); Knit.render(pull, 0); renderAll();
   };
 
   // ---------- Démarrage ----------
